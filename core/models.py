@@ -1,6 +1,9 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator
 # Create your models here.
+
+
+
 
 
 class Promotion(models.Model):
@@ -10,27 +13,34 @@ class Promotion(models.Model):
 class Collection(models.Model):
     title = models.CharField(max_length=255)
     featured_product = models.ForeignKey('Product',related_name='+', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return self.title
+    
+    class Meta:
+        ordering = ['title']
 
 class Product(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField(default='-')
+    slug = models.SlugField()
     description = models.TextField()
-    price = models.IntegerField()
-    inventory = models.IntegerField()
+    price = models.IntegerField(validators=[MinValueValidator(1)])
+    inventory = models.IntegerField(validators=[MinValueValidator(1)])
     last_updated = models.DateTimeField(auto_now=True)
     collection = models.ForeignKey(Collection, on_delete=models.PROTECT)
-    promotion = models.ManyToManyField(Promotion)
+    promotion = models.ManyToManyField(Promotion, blank=True)
+    
+    def __str__(self) -> str:
+        return self.title
     
 class Customer(models.Model):
     MEMBERSHIP_BRONZE = 'B'
     MEMBERSHIP_SILVER = 'S'
     MEMBERSHIP_GOLD = 'G'
-    MEMBERSHIP_PLATINUM = 'P'
     MEMBERSHIP_CHOICES = [
         (MEMBERSHIP_BRONZE, 'Bronze'),
         (MEMBERSHIP_SILVER, 'Silver'),
-        (MEMBERSHIP_GOLD, 'Gold'),
-        (MEMBERSHIP_PLATINUM, 'Platinum'),
+        (MEMBERSHIP_GOLD, 'Gold')
     ]
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -39,6 +49,11 @@ class Customer(models.Model):
     date_of_birth = models.DateField(null=True)
     membership = models.CharField(max_length=1, choices=MEMBERSHIP_CHOICES, default=MEMBERSHIP_BRONZE)
     
+    def __str__(self) -> str:
+        return f'{self.first_name} {self.last_name}'
+    
+    class Meta:
+        ordering = ['first_name', 'last_name'] 
     
 class Order(models.Model):
     PAYEMENT_STATUS_PENDING = 'P'
